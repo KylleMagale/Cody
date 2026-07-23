@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cody — AI Companion
 
-## Getting Started
+Cody is an AI companion for friendly conversation, emotional check-ins, and long-term personalized memory. Built as a portfolio project to demonstrate full-stack development, AI integration, authentication, database design, and thoughtful safety design.
 
-First, run the development server:
+**Live demo:** https://talktocody.vercel.app/
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+> ⚠️ Cody is a portfolio project, not a substitute for professional mental health care. If you're in crisis, please contact a real crisis line (see below) rather than relying on this app.
+
+## Features
+
+- 🔐 Authentication (register, login, session handling) via Supabase Auth
+- 💬 Real-time AI chat with markdown support
+- 🧠 Long-term memory — Cody remembers facts you share across sessions (name, hobbies, goals, etc.)
+- 🔄 Automatic AI provider failover (Gemini → Groq) — if one provider is down, the conversation continues uninterrupted
+- 🛟 A safety gate that detects crisis/self-harm language and responds with real crisis resources instead of an AI-generated reply
+- 📝 Conversation summarization to keep long chats efficient
+- 🌗 Light/dark mode
+
+## Tech stack
+
+| Layer | Tech |
+|---|---|
+| Frontend | Next.js, TypeScript, Tailwind CSS, shadcn/ui |
+| Backend | Supabase (Auth, Postgres, Row Level Security) |
+| AI | Google Gemini (primary), Groq (automatic fallback) |
+| Hosting | Vercel |
+
+## Architecture
+
+```
+User message
+   → API route receives it
+   → Safety check (pattern match for crisis language)
+        → matched: return static crisis-resource response, log, stop
+        → clear: continue
+   → Load memory + conversation context, build prompt
+   → Call Gemini (fallback to Groq on failure)
+   → Save reply, update memory, return to user
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Running locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repo:
+   ```
+   git clone https://github.com/KylleMagale/Cody.git
+   cd cody
+   ```
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Create a `.env.local` file with:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   GEMINI_API_KEY=your-gemini-key
+   GROQ_API_KEY=your-groq-key
+   ```
+4. Run the dev server:
+   ```
+   npm run dev
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Safety note
 
-## Learn More
+The crisis-detection pattern list in this project is intentionally simple and built for demonstration purposes — it is **not** a production-grade safety system and won't catch every case. If you're building on this for real-world use, pair it with a proper moderation API and involve people with relevant clinical/safety expertise.
 
-To learn more about Next.js, take a look at the following resources:
+## Crisis resources
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 🇵🇭 Philippines — National Center for Mental Health Crisis Hotline: 1553 (nationwide), 1800-1888-1553 (toll-free)
+- 🌍 Elsewhere — please look up your local crisis line or emergency number
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Status
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Actively in development as a portfolio project.
