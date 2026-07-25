@@ -53,6 +53,7 @@ User message
    ```
    NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your service role key
    GEMINI_API_KEY=your-gemini-key
    GROQ_API_KEY=your-groq-key
    ```

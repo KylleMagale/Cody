@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { BackButton } from '@/components/back-button'
 
 type Memory = {
   id: string
@@ -34,7 +35,8 @@ export default function MemoryPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-6">
+    <div className="mx-auto max-w-2xl p-6 pt-20">
+      <BackButton />
       <h1 className="mb-4 text-2xl font-semibold">What Cody remembers</h1>
       {loading && <p className="text-muted-foreground">Loading...</p>}
       {!loading && memories.length === 0 && (

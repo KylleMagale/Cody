@@ -61,14 +61,14 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
+  --background: #ffffff;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #1f8a82;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -78,7 +78,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: #2a5fd9;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -107,8 +107,8 @@
   --card-foreground: #e8e6e0;
   --popover: #2d2b28;
   --popover-foreground: #e8e6e0;
-  --primary: #ede9e0;
-  --primary-foreground: #262624;
+  --primary: #3ba69d;
+  --primary-foreground: #fdfdfd;
   --secondary: #3a3733;
   --secondary-foreground: #e8e6e0;
   --muted: #3a3733;
@@ -118,7 +118,7 @@
   --destructive: #d2665a;
   --border: rgba(237, 230, 220, 0.1);
   --input: rgba(237, 230, 220, 0.14);
-  --ring: #8c8983;
+  --ring: #5b85e0;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -149,4 +149,69 @@
   html {
     @apply font-sans;
   }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(10px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pop-out {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5) translateY(10px);
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-pop-out {
+  animation: pop-out 0.3s ease-in forwards;
+}
+
+@keyframes pop-in-shake {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(10px) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) translateY(-2px) rotate(0deg);
+  }
+  60% {
+    transform: scale(1) rotate(-8deg);
+  }
+  70% {
+    transform: scale(1) rotate(8deg);
+  }
+  80% {
+    transform: scale(1) rotate(-6deg);
+  }
+  90% {
+    transform: scale(1) rotate(6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg) translateY(0);
+  }
+}
+
+.animate-pop-in-shake {
+  animation: pop-in-shake 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
