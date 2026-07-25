@@ -23,7 +23,7 @@ async function callGemini(message: string, systemPrompt: string) {
         generationConfig: {
           responseMimeType: 'application/json',
           thinkingConfig: { thinkingLevel: 'low' },
-          maxOutputTokens: 300,
+          maxOutputTokens: 1024,
         },
       }),
     }
@@ -32,10 +32,17 @@ async function callGemini(message: string, systemPrompt: string) {
     const errorBody = await res.text()
     throw new Error(`Gemini request failed (${res.status}): ${errorBody}`)
   }
-  const data = await res.json()
-  const raw = data.candidates[0].content.parts[0].text as string
-  return JSON.parse(raw) as { reply: string; memories: { category: string; content: string }[] }
-}
+    const data = await res.json()
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text as string | undefined
+        if (!raw) {
+            throw new Error(`Gemini returned no usable content: ${JSON.stringify(data)}`)
+        }
+        try {
+            return JSON.parse(raw) as { reply: string; memories: { category: string; content: string }[] }
+        } catch {
+            throw new Error(`Gemini returned invalid JSON: ${raw}`)
+        }
+     }                      
 
 async function callGeminiPlainText(prompt: string) {
   const res = await fetch(
