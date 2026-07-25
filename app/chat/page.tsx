@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, MoreHorizontal } from 'lucide-react'
+import { ChevronDown, MoreHorizontal, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { getGreeting } from '@/lib/greeting'
 
 type Message = {
@@ -37,9 +37,10 @@ export default function ChatPage() {
   const [renaming, setRenaming] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [greeting, setGreeting] = useState<{ icon: string; text: string } | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const router = useRouter()
 
-    const loadUser = async () => {
+  const loadUser = async () => {
     const supabase = createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -75,7 +76,7 @@ export default function ChatPage() {
       .order('updated_at', { ascending: false })
     setConversations(data || [])
   }
-  
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadConversations()
@@ -197,14 +198,29 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <aside className="flex w-64 flex-col border-r bg-muted/30 p-3">
-        <h1 className="font-heading mb-3 px-2 text-xl font-bold text-companion-teal">Cody</h1>
+      <aside
+        className={`flex flex-col overflow-hidden border-r bg-muted/30 transition-all duration-200 ${
+          sidebarOpen ? 'w-64 p-3' : 'w-0 border-r-0 p-0'
+        }`}
+      >
+        <div className="flex w-60 items-center justify-between px-2">
+          <h1 className="font-heading text-xl font-bold text-companion-teal">Cody</h1>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Hide sidebar"
+            className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted"
+          >
+            <PanelLeftClose className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
 
-        <Button onClick={startNewChat} className="mb-3 w-full justify-start">
-          + New chat
-        </Button>
+        <div className="w-60">
+          <Button onClick={startNewChat} className="mb-3 mt-3 w-full justify-start">
+            + New chat
+          </Button>
+        </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="w-60 flex-1 overflow-y-auto">
           <p className="mb-1 px-2 text-xs font-medium uppercase text-muted-foreground">Recents</p>
           <div className="space-y-1">
             {conversations.map((c) => (
@@ -233,9 +249,7 @@ export default function ChatPage() {
                     >
                       Delete
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={openRename}>
-                      Rename
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={openRename}>Rename</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -243,7 +257,7 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <div className="border-t pt-2">
+        <div className="w-60 border-t pt-2">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-muted">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-companion-teal text-sm font-semibold text-white">
@@ -267,7 +281,17 @@ export default function ChatPage() {
       </aside>
 
       {/* Main chat area */}
-      <div className="flex flex-1 flex-col">
+      <div className="relative flex flex-1 flex-col">
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Show sidebar"
+            className="absolute left-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"
+          >
+            <PanelLeft className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
+
         <header className="flex items-center justify-center p-4">
           {renaming ? (
             <input
