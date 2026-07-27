@@ -26,6 +26,7 @@ type Conversation = {
 }
 
 export default function ChatPage() {
+  const [isMobile, setIsMobile] = useState(false)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -76,6 +77,17 @@ export default function ChatPage() {
       .order('updated_at', { ascending: false })
     setConversations(data || [])
   }
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      setSidebarOpen(!mobile)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -198,11 +210,22 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <aside
-        className={`flex flex-col overflow-hidden border-r bg-muted/30 transition-all duration-200 ${
-          sidebarOpen ? 'w-64 p-3' : 'w-0 border-r-0 p-0'
-        }`}
-      >
+        {isMobile && sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 z-30 bg-black/40"
+          />
+        )}
+
+        <aside
+          className={`flex flex-col overflow-hidden border-r bg-muted/30 transition-all duration-200 ${
+            isMobile
+              ? `fixed inset-y-0 left-0 z-40 ${sidebarOpen ? 'w-64 p-3' : 'w-0 p-0'}`
+              : sidebarOpen
+              ? 'w-64 p-3'
+              : 'w-0 border-r-0 p-0'
+          }`}
+        >
         <div className="flex w-60 items-center justify-between px-2">
           <h1 className="font-heading text-xl font-bold text-companion-teal">Cody</h1>
           <button
@@ -226,7 +249,10 @@ export default function ChatPage() {
             {conversations.map((c) => (
               <div key={c.id} className="group relative flex items-center">
                 <button
-                  onClick={() => loadConversation(c.id)}
+                  onClick={() => {
+                    loadConversation(c.id)
+                    if (isMobile) setSidebarOpen(false)
+                  }}
                   className={`w-full truncate rounded-lg py-2 pl-3 pr-8 text-left text-sm hover:bg-muted ${
                     conversationId === c.id ? 'bg-muted font-medium' : ''
                   }`}

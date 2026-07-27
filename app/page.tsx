@@ -137,7 +137,7 @@ function MiniChatUI() {
 // Laptop mockup — screen only, no keyboard base
 function LaptopMockup() {
   return (
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 0 40px' }}>
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 0 40px', width: '100%', maxWidth: 460, margin: '0 auto' }}>
       <div
         style={{
           position: 'absolute',
@@ -152,18 +152,19 @@ function LaptopMockup() {
         }}
       />
       <div style={{ perspective: '1300px', perspectiveOrigin: '50% 40%' }}>
-        <div
-          style={{
-            transform: 'rotateY(-9deg) rotateX(2deg)',
-            transformStyle: 'preserve-3d',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
+          <div
+            className="laptop-tilt"
+            style={{
+              transformStyle: 'preserve-3d',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
           <div
             style={{
-              width: 460,
+              width: '100%',
+              maxWidth: 460,
               background: 'linear-gradient(160deg, #424242 0%, #373737 100%)',
               borderRadius: '16px 16px 12px 12px',
               padding: '8px 8px 10px',
@@ -355,7 +356,7 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section style={{ maxWidth: 1152, margin: '0 auto', padding: '80px 24px 100px' }}>
+      <section style={{ maxWidth: 1152, margin: '0 auto', padding: 'clamp(40px, 8vw, 80px) 20px clamp(50px, 10vw, 100px)' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 48 }}>
           <div style={{ flex: '1 1 380px', maxWidth: 520 }}>
             <div

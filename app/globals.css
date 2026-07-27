@@ -215,3 +215,13 @@
 .animate-pop-in-shake {
   animation: pop-in-shake 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+.laptop-tilt {
+  transform: rotateY(-9deg) rotateX(2deg);
+}
+
+@media (max-width: 640px) {
+  .laptop-tilt {
+    transform: rotateY(0deg) rotateX(0deg);
+  }
+}
