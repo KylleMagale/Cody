@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -13,11 +13,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ChevronDown, MoreHorizontal, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { getGreeting } from '@/lib/greeting'
+import { isSameDay, formatDateSeparator, formatMessageTime } from '@/lib/chat-formatting'
 
 type Message = {
   id: string
   role: 'user' | 'assistant'
   content: string
+  created_at: string
 }
 
 type Conversation = {
@@ -26,7 +28,6 @@ type Conversation = {
 }
 
 export default function ChatPage() {
-  const [isMobile, setIsMobile] = useState(false)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -39,7 +40,12 @@ export default function ChatPage() {
   const [titleDraft, setTitleDraft] = useState('')
   const [greeting, setGreeting] = useState<{ icon: string; text: string } | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const isNearBottomRef = useRef(true)
 
   const loadUser = async () => {
     const supabase = createClient()
@@ -79,6 +85,14 @@ export default function ChatPage() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadConversations()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
@@ -90,12 +104,29 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadConversations()
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadUser()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    let ticking = false
+    const handleScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const { scrollTop, scrollHeight, clientHeight } = container
+        isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 120
+        ticking = false
+      })
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    return () => container.removeEventListener('scroll', handleScroll)
   }, [])
+
+  useEffect(() => {
+    if (isNearBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }
+  }, [messages, loading])
 
   const handleDeleteConversation = async (id: string) => {
     const supabase = createClient()
@@ -111,7 +142,7 @@ export default function ChatPage() {
     const supabase = createClient()
     const { data } = await supabase
       .from('messages')
-      .select('id, role, content')
+      .select('id, role, content, created_at')
       .eq('conversation_id', id)
       .order('created_at', { ascending: true })
     setMessages(data || [])
@@ -158,6 +189,7 @@ export default function ChatPage() {
       id: crypto.randomUUID(),
       role: 'user',
       content: input,
+      created_at: new Date().toISOString(),
     }
     setMessages((prev) => [...prev, userMessage])
     setInput('')
@@ -176,12 +208,16 @@ export default function ChatPage() {
 
       if (!res.ok) {
         const fallbackMessage =
-          res.status === 502
+          res.status === 429
+            ? data.resetAt
+              ? `You've reached today's message limit with Cody. You can chat again at ${new Date(data.resetAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`
+              : "You've reached today's message limit with Cody. Please try again later."
+            : res.status === 502
             ? "Cody's a bit overwhelmed and reached its current usage limit. Please try again in a moment."
             : "Sorry! Cody couldn't complete your request. Please try again later."
         setMessages((prev) => [
           ...prev,
-          { id: crypto.randomUUID(), role: 'assistant', content: fallbackMessage },
+          { id: crypto.randomUUID(), role: 'assistant', content: fallbackMessage, created_at: new Date().toISOString() },
         ])
         return
       }
@@ -189,7 +225,7 @@ export default function ChatPage() {
       setConversationId(data.conversationId)
       setMessages((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), role: 'assistant', content: data.reply },
+        { id: crypto.randomUUID(), role: 'assistant', content: data.reply, created_at: new Date().toISOString() },
       ])
 
       if (isNewConvo) loadConversations()
@@ -200,6 +236,7 @@ export default function ChatPage() {
           id: crypto.randomUUID(),
           role: 'assistant',
           content: "Sorry, I couldn't respond just now. Please try again.",
+          created_at: new Date().toISOString(),
         },
       ])
     } finally {
@@ -210,22 +247,22 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-        {isMobile && sidebarOpen && (
-          <div
-            onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 z-30 bg-black/40"
-          />
-        )}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-30 bg-black/40"
+        />
+      )}
 
-        <aside
-          className={`flex flex-col overflow-hidden border-r bg-muted/30 transition-all duration-200 ${
-            isMobile
-              ? `fixed inset-y-0 left-0 z-40 ${sidebarOpen ? 'w-64 p-3' : 'w-0 p-0'}`
-              : sidebarOpen
-              ? 'w-64 p-3'
-              : 'w-0 border-r-0 p-0'
-          }`}
-        >
+      <aside
+        className={`flex flex-col overflow-hidden border-r bg-muted/30 transition-all duration-200 ${
+          isMobile
+            ? `fixed inset-y-0 left-0 z-40 ${sidebarOpen ? 'w-64 p-3' : 'w-0 p-0'}`
+            : sidebarOpen
+            ? 'w-64 p-3'
+            : 'w-0 border-r-0 p-0'
+        }`}
+      >
         <div className="flex w-60 items-center justify-between px-2">
           <h1 className="font-heading text-xl font-bold text-companion-teal">Cody</h1>
           <button
@@ -375,19 +412,37 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
               <div className="mx-auto max-w-2xl space-y-3 p-4">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                        msg.role === 'user' ? 'bg-companion-teal text-white' : 'bg-muted text-foreground'
-                      }`}
-                    >
-                      {msg.content}
+                {messages.map((msg, index) => {
+                  const currentDate = new Date(msg.created_at)
+                  const prevDate = index > 0 ? new Date(messages[index - 1].created_at) : null
+                  const showSeparator = !prevDate || !isSameDay(prevDate, currentDate)
+
+                  return (
+                    <div key={msg.id}>
+                      {showSeparator && (
+                        <div className="my-4 flex items-center justify-center">
+                          <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                            {formatDateSeparator(currentDate)}
+                          </span>
+                        </div>
+                      )}
+                      <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                        <div
+                          className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                            msg.role === 'user' ? 'bg-companion-teal text-white' : 'bg-muted text-foreground'
+                          }`}
+                        >
+                          {msg.content}
+                        </div>
+                        <span className="mt-1 px-1 text-[11px] text-muted-foreground">
+                          {formatMessageTime(currentDate)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
                 {loading && (
                   <div className="flex justify-start">
                     <div className="max-w-[75%] rounded-2xl bg-muted px-4 py-2 text-foreground">
@@ -395,6 +450,7 @@ export default function ChatPage() {
                     </div>
                   </div>
                 )}
+                <div ref={bottomRef} />
               </div>
             </div>
 

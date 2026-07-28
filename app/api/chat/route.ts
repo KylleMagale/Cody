@@ -93,8 +93,26 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
+    const { data: rateLimitResult, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+    p_user_id: user.id,
+    p_limit: 75,
+    p_window_hours: 24,
+  })
 
-  const { conversationId, message } = await request.json()
+  if (rateLimitError) {
+    console.error('Rate limit check failed:', rateLimitError)
+  }
+
+    if (rateLimitResult && rateLimitResult.length > 0 && !rateLimitResult[0].allowed) {
+      const windowStart = new Date(rateLimitResult[0].reset_start)
+      const resetAt = new Date(windowStart.getTime() + 24 * 60 * 60 * 1000)
+      return NextResponse.json(
+        { error: "You've reached today's message limit.", resetAt: resetAt.toISOString() },
+        { status: 429 }
+      )
+    }
+
+    const { conversationId, message } = await request.json()
 
   if (containsCrisisLanguage(message)) {
     let convoId = conversationId
